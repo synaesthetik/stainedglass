@@ -238,8 +238,17 @@ function band(lines: Line[], inner: number): Line[] {
   })
 }
 
-const codeLines = (part: { lang: string; code: string }, outer: number): Line[] =>
-  band(highlight(part.lang, part.code).flatMap(l => wrap(l, outer)), outer)
+function rule(label: Line, outer: number, tone: Style): Line {
+  if (!label.length) return [{ text: '─'.repeat(outer), style: tone }]
+  const used = 4 + label.reduce((n, seg) => n + [...seg.text].length, 0)
+  return [{ text: '── ', style: tone }, ...label, { text: ' ' + '─'.repeat(Math.max(0, outer - used)), style: tone }]
+}
+
+const codeLines = (part: { lang: string; code: string }, outer: number, tone: Style = 'border', title?: Line): Line[] => [
+  rule(title ?? (part.lang ? [{ text: part.lang, style: 'comment' as Style }] : []), outer, tone),
+  ...band(highlight(part.lang, part.code).flatMap(l => wrap(l, outer)), outer),
+  rule([], outer, tone),
+]
 
 function partLines(part: Part, inner: number): Line[] {
   if ('lang' in part) return band(highlight(part.lang, part.code).flatMap(l => wrap(l, inner)), inner)
@@ -400,9 +409,9 @@ const drawAssistantMessage = async ($: any, e: any, next: any) => {
       for (const part of section.parts) {
         if ('lang' in part) {
           flushPending()
-          const heading: Line[] = titled ? [] : [inline(section.title!).map(seg => ({ ...seg, style: seg.style ?? titleStyle }))]
+          const heading = titled ? undefined : inline(section.title!).map(seg => ({ ...seg, style: seg.style ?? titleStyle }))
           titled = true
-          blocks.push({ code: [...heading, ...codeLines(part, outer)] })
+          blocks.push({ code: codeLines(part, outer, tone, heading) })
           continue
         }
         pending.push(...(pending.length ? [[]] : []), ...partLines(part, inner))

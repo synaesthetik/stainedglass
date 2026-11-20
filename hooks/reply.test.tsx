@@ -365,3 +365,39 @@ test('a code line uses the full reply width before it wraps', async ($, on) => {
   expect((await ui.findAll({ type: 'Text' })).some((t: any) => t.text === command)).toBe(true)
   await ui.unmount()
 })
+
+const around = (lines: string[], code: string) => {
+  const at = lines.indexOf(code)
+  const rows = (from: number, step: number) => {
+    for (let i = from; i >= 0 && i < lines.length; i += step) if (/^──/.test(lines[i]!) && [...lines[i]!].length === 96) return lines[i]
+  }
+  return { open: rows(at - 1, -1), close: rows(at + 1, 1) }
+}
+
+test('a code block sits between a rule titled with its language and a plain closing rule, each on its own row', async ($, on) => {
+  const ui = await mount($, on, 'Run this:\n\n```bash\ngit status --short\n```\n\nThen check.')
+  const { open, close } = around((await texts(ui)).split('\n'), 'git status --short')
+  expect(open).toBe('── bash ' + '─'.repeat(88))
+  expect(close).toBe('─'.repeat(96))
+  expect(await seg(ui, /^bash$/)).toContainEqual(expect.objectContaining({ color: 'blackBright' }))
+  expect((await seg(ui, /^── $/))[0]).toEqual(expect.objectContaining({ color: 'gray' }))
+  await ui.unmount()
+})
+
+test('an unlabelled fence gets a plain opening rule', async ($, on) => {
+  const ui = await mount($, on, 'Run:\n\n```\nmake\n```')
+  const { open, close } = around((await texts(ui)).split('\n'), 'make')
+  expect(open).toBe('─'.repeat(96))
+  expect(close).toBe('─'.repeat(96))
+  await ui.unmount()
+})
+
+test('code that opens a section carries the section title in its rule, in the section colour', async ($, on) => {
+  const ui = await mount($, on, '**Steps**\n```bash\nls -la\n```\nThen check the output.')
+  const { open, close } = around((await texts(ui)).split('\n'), 'ls -la')
+  expect(open).toMatch(/^── Steps ─+$/)
+  expect(close).toBe('─'.repeat(96))
+  expect(await seg(ui, /^── Steps ─+$/)).toContainEqual(expect.objectContaining({ color: 'cyan' }))
+  expect(await seg(ui, /^─{96}$/)).toContainEqual(expect.objectContaining({ color: 'cyan' }))
+  await ui.unmount()
+})
