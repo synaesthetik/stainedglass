@@ -1,0 +1,6 @@
+{
+  "name": "stainedglass",
+  "description": "Claude Code replies as colour-coded panes, with rich tables, gauges and timelines drawn in the terminal",
+  "owner": { "name": "Patrick Lewis" },
+  "plugins": [{ "name": "stainedglass", "source": "./" }]
+}

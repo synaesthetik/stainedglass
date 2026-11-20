@@ -1,0 +1,10 @@
+{
+  "name": "stainedglass",
+  "version": "0.11.0",
+  "description": "Redraws Claude Code's replies as colour-coded panes: each chunk in its own box, borders coloured by message type (question, plan, warning, danger, done), highlighted code and diffs, and rich tables, gauges and timelines drawn right in the terminal",
+  "types": "./types/index.d.ts",
+  "license": "MIT",
+  "author": {
+    "name": "Patrick Lewis"
+  }
+}
