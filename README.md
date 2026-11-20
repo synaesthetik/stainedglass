@@ -2,7 +2,7 @@
 
 Coloured panes, clean dividers, one rich picture, right in the terminal.
 
-stainedglass redraws Claude Code's replies so they read at a glance. Every chunk sits in its own pane. The border colour says what kind of message it is: a question, a plan, a warning, danger or done. And Claude can draw tables, gauges, step strips and timelines inline, without leaving the terminal for an HTML page. It uses the terminal's own 16 colours, plus two fixed diff bands.
+stainedglass redraws Claude Code's replies so they read at a glance. Every chunk sits in its own pane. The border colour says what kind of message it is: a question, a plan, a warning, danger or done. And Claude can draw tables, gauges, step strips and timelines inline, without leaving the terminal for an HTML page. It uses the terminal's own 16 colours, plus a fixed purple for change recaps and two fixed diff bands.
 
 ## Install
 
@@ -46,6 +46,8 @@ claude plugin uninstall stainedglass
 - magenta for questions and decisions, including a title ending in `?` and a lone short question paragraph
 - cyan for plans: plan, steps, next, approach, proposal
 - green for done or verified results
+- bright blue for findings: root cause, finding, evidence, diagnosis, why
+- purple (`#c678dd`) for change recaps: what changed, changes, diff, what's new
 - grey otherwise, with a bright white title
 
 The first match in that order wins. A numbered item takes its colour from its bold lead, so `1. **Risk:** …` is yellow.

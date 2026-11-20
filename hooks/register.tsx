@@ -15,7 +15,7 @@ const TOOL = 'mcp__stainedglass__show'
 const TASK_TOOLS = ['TodoWrite', 'TaskCreate', 'TaskUpdate']
 const QUIET_TOOLS = [TOOL, ...TASK_TOOLS]
 const OUTPUT_TAIL = 10
-const TONE_STYLE: Record<Tone, Style> = { border: 'border', ok: 'ok', warn: 'warn', bad: 'bad', ask: 'decision', plan: 'plan' }
+const TONE_STYLE: Record<Tone, Style> = { border: 'border', ok: 'ok', warn: 'warn', bad: 'bad', ask: 'decision', plan: 'plan', find: 'find', change: 'change' }
 
 const tasks = atom({ plugin: 'stainedglass', key: 'tasks' } as const, [] as Task[], { shape: 'tasks-1' })
 

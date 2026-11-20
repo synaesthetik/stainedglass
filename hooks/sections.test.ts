@@ -19,7 +19,16 @@ test('a title picks its border by the kind of message, the strongest signal firs
     ['Approach', 'plan'],
     ['Done', 'ok'],
     ['Verified', 'ok'],
-    ['What changed', 'border'],
+    ['Root cause', 'find'],
+    ['Findings', 'find'],
+    ['Evidence', 'find'],
+    ['Why it hangs', 'find'],
+    ['Diagnosis', 'find'],
+    ['What changed', 'change'],
+    ['Changes', 'change'],
+    ['Diff', 'change'],
+    ['Cause of failure', 'bad'],
+    ['Fixed: what changed', 'ok'],
     ['Cleanup', 'border'],
   ]
   expect(cases.map(([title]) => [title, toneOf(title)])).toEqual(cases)

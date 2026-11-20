@@ -1,6 +1,6 @@
 export type Style = 'id' | 'range' | 'measure' | 'heading' | 'ok' | 'warn' | 'bad' | 'info' | 'border' | 'banner' | 'key' | 'exit' | 'added' | 'removed'
   | 'code' | 'path' | 'strong' | 'em' | 'link' | 'header' | 'bullet'
-  | 'keyword' | 'string' | 'number' | 'constant' | 'comment' | 'command' | 'flag' | 'variable' | 'operator' | 'field' | 'literal' | 'hunk' | 'count' | 'lead' | 'decision' | 'plan'
+  | 'keyword' | 'string' | 'number' | 'constant' | 'comment' | 'command' | 'flag' | 'variable' | 'operator' | 'field' | 'literal' | 'hunk' | 'count' | 'lead' | 'decision' | 'plan' | 'find' | 'change'
 export type Seg = { text: string; style?: Style }
 export type Line = Seg[]
 
@@ -73,6 +73,8 @@ export const TEXT_PROPS: Record<Style, { color?: string; backgroundColor?: strin
   lead: { color: 'magentaBright', bold: true },
   decision: { color: 'magenta' },
   plan: { color: 'cyan' },
+  find: { color: 'blueBright' },
+  change: { color: '#c678dd' },
 }
 
 const MARKUP = /\{(id|range|measure|heading|ok|warn|bad|info):([^{}]*)\}/g

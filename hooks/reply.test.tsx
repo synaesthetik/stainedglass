@@ -215,7 +215,7 @@ The old pane closes itself.`
 test('labelled chunks, headers and quotes draw as boxes titled in their top border, coloured by tone', async ($, on) => {
   const ui = await mount($, on, SECTIONED)
   const drawn = await texts(ui)
-  expect((await ui.find({ type: 'Text', text: /^What changed$/ }))?.props).toEqual(expect.objectContaining({ color: 'whiteBright', bold: true }))
+  expect(await seg(ui, /^── What changed ─+$/)).toContainEqual(expect.objectContaining({ color: '#c678dd' }))
   expect(await titled(ui, 'Not verified live')).toEqual(expect.objectContaining({ color: 'yellow' }))
   expect(await titled(ui, 'Important')).toEqual(expect.objectContaining({ color: 'red' }))
   expect(await titled(ui, 'Cleanup')).toBeTruthy()
@@ -435,5 +435,13 @@ test('a URL inside a titled section gets its row after that box, in the section 
   const drawn = await texts(ui)
   expect(around(drawn.split('\n'), 'https://x.io/pull/9').open).toBe('── link ' + '─'.repeat(88))
   expect(await seg(ui, /^─{96}$/)).toContainEqual(expect.objectContaining({ color: 'green' }))
+  await ui.unmount()
+})
+
+test('a finding draws in a bright blue box and a change recap in purple', async ($, on) => {
+  const ui = await mount($, on, '**Root cause**\nThe shell predated the edit.\n\n**What changed**\nTwo rules around code.')
+  expect(await borders(ui)).toEqual(['blueBright', '#c678dd'])
+  expect(await titled(ui, 'Root cause')).toEqual(expect.objectContaining({ color: 'blueBright' }))
+  expect(await titled(ui, 'What changed')).toEqual(expect.objectContaining({ color: '#c678dd' }))
   await ui.unmount()
 })

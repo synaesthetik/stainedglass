@@ -1,6 +1,6 @@
 const plain = (t: string) => t.replace(/[*`]/g, '').trim()
 
-export type Tone = 'border' | 'ok' | 'warn' | 'bad' | 'ask' | 'plan'
+export type Tone = 'border' | 'ok' | 'warn' | 'bad' | 'ask' | 'plan' | 'find' | 'change'
 export type Part = { text: string } | { lang: string; code: string }
 export type Section = { title?: string; tone: Tone; parts: Part[] }
 
@@ -20,6 +20,8 @@ export function toneOf(title: string): Tone {
   if (/question|decision|decide|choose|which|\?\s*$/i.test(title)) return 'ask'
   if (/plan|steps|next|approach|proposal|roadmap/i.test(title)) return 'plan'
   if (/done|verified|shipped|passed|fixed|built|complete/i.test(title)) return 'ok'
+  if (/cause|finding|found|evidence|diagnos|\bwhy\b/i.test(title)) return 'find'
+  if (/\bchange[sd]?\b|\bdiff\b|what.?s new/i.test(title)) return 'change'
   return 'border'
 }
 
