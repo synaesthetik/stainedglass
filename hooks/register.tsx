@@ -393,7 +393,7 @@ const drawAssistantMessage = async ($: any, e: any, next: any) => {
       let titled = false
       const flushPending = () => {
         if (!pending.length) return
-        blocks.push(bordered(pending, inner, tone, titled ? [] : titleLabel(inline(section.title), titleStyle)))
+        blocks.push(bordered(pending, inner, tone, titled ? [] : titleLabel(inline(section.title!), titleStyle)))
         titled = true
         pending = []
       }
