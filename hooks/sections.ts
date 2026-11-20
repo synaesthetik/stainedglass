@@ -20,7 +20,7 @@ export function toneOf(title: string): Tone {
   if (/question|decision|decide|choose|which|\?\s*$/i.test(title)) return 'ask'
   if (/plan|steps|next|approach|proposal|roadmap/i.test(title)) return 'plan'
   if (/done|verified|shipped|passed|fixed|built|complete/i.test(title)) return 'ok'
-  if (/cause|finding|found|evidence|diagnos|\bwhy\b/i.test(title)) return 'find'
+  if (/cause|finding|found|evidence|diagnos|\bwhy\b|\bcheck|\baudit/i.test(title)) return 'find'
   if (/\bchange[sd]?\b|\bdiff\b|what.?s new/i.test(title)) return 'change'
   return 'border'
 }

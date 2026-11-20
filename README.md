@@ -46,7 +46,7 @@ claude plugin uninstall stainedglass
 - magenta for questions and decisions, including a title ending in `?` and a lone short question paragraph
 - cyan for plans: plan, steps, next, approach, proposal
 - green for done or verified results
-- bright blue for findings: root cause, finding, evidence, diagnosis, why
+- bright blue for findings: root cause, finding, evidence, diagnosis, why, check, audit
 - purple (`#c678dd`) for change recaps: what changed, changes, diff, what's new
 - grey otherwise, with a bright white title
 
