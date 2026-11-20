@@ -445,3 +445,17 @@ test('a finding draws in a bright blue box and a change recap in purple', async 
   expect(await titled(ui, 'What changed')).toEqual(expect.objectContaining({ color: '#c678dd' }))
   await ui.unmount()
 })
+
+test('a URL in a closing question gets its link row in the question colour', async ($, on) => {
+  const ui = await mount($, on, 'The branch is pushed.\n\nShould I merge https://x.io/pull/3?')
+  const drawn = await texts(ui)
+  expect(around(drawn.split('\n'), 'https://x.io/pull/3').open).toBe('── link ' + '─'.repeat(88))
+  expect(await seg(ui, /^─{96}$/)).toContainEqual(expect.objectContaining({ color: 'magenta' }))
+  await ui.unmount()
+})
+
+test('a URL inside inline code also gets a link row', async ($, on) => {
+  const ui = await mount($, on, 'Open `https://x.io/docs` to read more.')
+  expect(around((await texts(ui)).split('\n'), 'https://x.io/docs').open).toBe('── link ' + '─'.repeat(88))
+  await ui.unmount()
+})

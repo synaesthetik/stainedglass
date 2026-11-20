@@ -41,6 +41,7 @@ test('bullets become coloured markers with a hanging indent; numbers keep their 
   const lines = markdown('- alpha beta gamma delta\n  - nested\n1. first', 14)
   expect(plainOf(lines)).toEqual(['• alpha beta', '  gamma delta', '  • nested', '1. first'])
   expect(styleOf(lines, '•')).toBe('bullet')
+  expect(TEXT_PROPS.bullet.color).toBe('cyan')
   expect(styleOf(lines, '1.')).toBe('bullet')
 })
 

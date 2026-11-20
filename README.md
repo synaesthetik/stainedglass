@@ -113,6 +113,36 @@ The strip follows `TodoWrite`, `TaskCreate`, `TaskUpdate` and `TaskList`. Those 
 
 ctrl+o always shows Claude Code's own rows. stainedglass leaves the permission dialog, the prompt and the status bar alone.
 
+## Asking for visuals
+
+Claude reaches for `show` on its own when layout helps: where you are in a plan, options side by side, a status panel, a review summary, a comparison across many items. To get one on purpose, say what you want to see and name the shape. Prompts like these work:
+
+- "Compare these five instance types in a table, with gauges for memory and cost."
+- "Show me where the migration is as a step strip."
+- "Summarise the test run as a panel: a pass/fail gauge and a table of the slowest tests."
+- "Put each endpoint's p95 on a timeline against the 300ms target."
+
+**Live panels.** The strongest use is an htop-style panel that refreshes while something runs, such as a rollout, a migration or a load test. Ask for it in plain words ("show me a live panel as you monitor that whole stack, htop style, using stainedglass"). It holds up best with three pieces:
+
+1. A read-only collect script that gathers everything in one run, so each refresh is one command.
+2. `/loop` on a fixed interval, such as `/loop 1m <refresh prompt>`.
+3. A refresh prompt that names the layout, so every tick draws the same panel:
+
+```text
+Refresh the rollout panel: run ./collect.sh (read-only), then render an
+updated stainedglass panel in the same layout as before (banner, phases,
+pods table with cpu/mem gauges vs limits, nodes table, cluster kv, watch
+list). Flag changes since the last tick: restarts, new or removed pods,
+health changes, warning events, memory above 90% of limit. Keep text
+outside the panel to one line. If the script fails to authenticate, stop
+the loop and tell me how to re-auth.
+```
+
+- **Name the blocks.** Listing them (banner, phases, tables, kv, a watch list box) keeps the layout stable from tick to tick.
+- **Give gauges a limit.** A gauge cell needs a `max`, such as a pod's memory limit, and a `target` sets where it turns yellow.
+- **Ask for the delta.** "Flag changes since the last tick" puts what's new in the banner, so you don't have to diff two panels by eye.
+- **Keep actions in prose.** Claude only sees an acknowledgement of what it drew, so anything you must act on is repeated in a line of text.
+
 ## Development
 
 Clone it and point Claude Code at the checkout from your shell profile, then start a new session:
