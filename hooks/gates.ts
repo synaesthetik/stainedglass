@@ -2,6 +2,7 @@ import type { Choice } from '../types'
 
 const OPTION = /^\s*(\d+)[.)]\s+(.+)$/
 const TRAILING_LINES = 2
+const YES_NO = /^(should|shall|can|could|may|do|does|did|is|are|want|would|will)\b/i
 const TRADEOFF = /\s+[—–-]\s+/
 const SECTION_HEAD = /^\s*(\*\*[^*]{1,60}\*\*[.:]?|#{1,6}\s+.+)\s*$/
 
@@ -13,8 +14,8 @@ export function plain(text: string): string {
     .trim()
 }
 
-function isRecommended(raw: string): boolean {
-  return /^\*\*/.test(raw.trim()) || /\[(recommended|rec)\]|\(recommended\)/i.test(raw)
+function isRecommended(raw: string, boldIsSignal: boolean): boolean {
+  return (boldIsSignal && /^\*\*/.test(raw.trim())) || /\[(recommended|rec)\]|\(recommended\)/i.test(raw)
 }
 
 export type Split = { before: string; question: string; options: Choice[]; after: string[] }
@@ -43,16 +44,18 @@ export function splitOptions(answer: string): Split | null {
     const asked = after.findIndex(l => plain(l).endsWith('?'))
     if (asked < 0) return null
     question = plain(after[asked]!)
+    if (YES_NO.test(question) && !/\bor\b|\bwhich\b/i.test(question)) return null
     trailing = after.filter((_, i) => i !== asked)
     beforeEnd = start
   }
 
   const pointedAt = trailing.join(' ').match(/go with \**(\d+)/i)?.[1]
+  const bolded = rows.filter(raw => /^\*\*/.test((raw.match(OPTION)?.[2] ?? '').trim())).length
   const options = rows.map((raw): Choice => {
     const [, key = '', text = ''] = raw.match(OPTION) ?? []
     const [label = '', ...rest] = plain(text).split(TRADEOFF)
     const detail = rest.join(' — ') || undefined
-    return { key, label, detail, recommended: isRecommended(text) || key === pointedAt || undefined }
+    return { key, label, detail, recommended: isRecommended(text, bolded === 1) || key === pointedAt || undefined }
   })
   return { before: lines.slice(0, beforeEnd).join('\n').trimEnd(), question, options, after: trailing.map(plain) }
 }

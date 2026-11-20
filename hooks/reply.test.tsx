@@ -322,3 +322,27 @@ test('a plain numbered list with no intro is one untitled box', async ($, on) =>
   expect(await texts(ui)).toMatch(/2\. Another thing/)
   await ui.unmount()
 })
+
+test('a yes/no question after a list of findings is its own box; the findings are not options', async ($, on) => {
+  const ui = await mount($, on, 'Some gaps:\n\n1. **At the bottom.** It should move up.\n2. **No update line.** Add one.\n\nShould I go ahead?')
+  const drawn = await texts(ui)
+  expect(drawn).not.toContain('[1]')
+  expect(await titled(ui, '1. At the bottom')).toBeTruthy()
+  expect(await borders(ui)).toEqual(['gray', 'gray', 'gray', 'magenta'])
+  await ui.unmount()
+})
+
+test('bold marks the recommended option only when exactly one option is bold', async ($, on) => {
+  const allBold = await mount($, on, 'Next?\n\n1. **Push** it now\n2. **Hold** it for review')
+  for (const label of [/^Push it now$/, /^Hold it for review$/]) {
+    expect((await seg(allBold, label)).some((p: any) => p.color === 'green')).toBe(false)
+  }
+  await allBold.unmount()
+})
+
+test('a single bold option is the recommended one', async ($, on) => {
+  const ui = await mount($, on, 'Next?\n\n1. **Push** it now\n2. Hold it for review')
+  expect(await seg(ui, /^Push it now$/)).toContainEqual(expect.objectContaining({ color: 'green' }))
+  expect((await seg(ui, /^Hold it for review$/)).some((p: any) => p.color === 'green')).toBe(false)
+  await ui.unmount()
+})
