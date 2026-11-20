@@ -4,6 +4,38 @@ Coloured panes, clean dividers, one rich picture, right in the terminal.
 
 stainedglass redraws Claude Code's replies so they read at a glance. Every chunk sits in its own pane. The border colour says what kind of message it is: a question, a plan, a warning, danger or done. And Claude can draw tables, gauges, step strips and timelines inline, without leaving the terminal for an HTML page. It uses the terminal's own 16 colours, plus two fixed diff bands.
 
+## Install
+
+**Requirements.** Tested on Claude Code 2.1.329. Plugins that run their own code are a recent feature, so update Claude Code first if the install fails. It's built and tested in the terminal; other surfaces such as the desktop app may draw it differently.
+
+At a Claude Code prompt:
+
+```
+/plugin install stainedglass --marketplace synaesthetik/stainedglass
+```
+
+Or from a shell:
+
+```bash
+claude plugin install stainedglass --marketplace synaesthetik/stainedglass
+```
+
+What to expect:
+1. `Add marketplace?` naming `github:synaesthetik/stainedglass`: answer `y`.
+2. The plugin's details and a scope: press Enter for the user scope, which loads it in every session.
+3. `Installed stainedglass. Plugin is now active.` It takes effect in the current session straight away, with no restart.
+
+In the desktop app, where `/plugin` doesn't run: click **+** next to the prompt box, then **Plugins**, **Add marketplace** with `synaesthetik/stainedglass`, then **Add plugin**.
+
+### Update or remove
+
+```bash
+claude plugin update stainedglass
+claude plugin uninstall stainedglass
+```
+
+`claude plugin disable stainedglass` turns it off without removing it, and `claude plugin enable stainedglass` turns it back on.
+
 ## What it changes
 
 **Replies.** stainedglass draws every reply itself, so text wraps to the box width and every box is the same width. Markdown comes out coloured: inline code, paths, bold, italics, links, list markers, headers and tables. A summary row is left to Claude Code.
@@ -77,18 +109,20 @@ The strip follows `TodoWrite`, `TaskCreate`, `TaskUpdate` and `TaskList`. Those 
 
 ctrl+o always shows Claude Code's own rows. stainedglass leaves the permission dialog, the prompt and the status bar alone.
 
-## Install
+## Development
 
-From this repository's marketplace:
-
-```
-/plugin install stainedglass --marketplace synaesthetik/stainedglass
-```
-
-To work on stainedglass itself, point Claude Code at a checkout from your shell profile and start a new session:
+Clone it and point Claude Code at the checkout from your shell profile, then start a new session:
 
 ```bash
+git clone https://github.com/synaesthetik/stainedglass ~/code/stainedglass
 export CLAUDE_CODE_PLUGIN_DIRS="$HOME/code/stainedglass"
 ```
 
-For one session only, run `claude --plugin-dir ~/code/stainedglass`. Run the tests with `claude plugin test .` from the checkout.
+For one session only, run `claude --plugin-dir ~/code/stainedglass` instead. Edits reload when the turn that made them ends.
+
+Run the tests and checks from the checkout:
+
+```bash
+claude plugin test .
+claude plugin validate .
+```
