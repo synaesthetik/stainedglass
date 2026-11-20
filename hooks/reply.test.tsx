@@ -177,12 +177,13 @@ test('each bare paragraph draws in its own native single-border box at the full 
   await ui.unmount()
 })
 
-test('a fenced block indented under an item stays code inside that item box', async ($, on) => {
+test('a fenced block indented under a plain item stays code inside that list box', async ($, on) => {
   const ui = await mount($, on, 'Then:\n\n1. Add the file:\n   ```json\n   { "name": "x" }\n   ```\n2. Restart')
   const drawn = await texts(ui)
-  expect(await titled(ui, '1')).toBeTruthy()
+  expect(await titled(ui, '1')).toBeFalsy()
   expect(drawn).not.toContain('```')
-  expect(await titled(ui, '2')).toBeTruthy()
+  expect(drawn).toContain('{ "name": "x" }')
+  expect(await borders(ui)).toEqual(['gray'])
   await ui.unmount()
 })
 
@@ -300,5 +301,24 @@ test('a list under its own label stays in that section; a question after it is i
   expect(drawn).not.toContain('[1]')
   expect(drawn).toMatch(/^Which repo should it go to\?$/m)
   expect(await borders(ui)).toEqual(['gray', 'cyan', 'magenta'])
+  await ui.unmount()
+})
+
+test('a plain numbered list stays in one box, titled and coloured by its intro line', async ($, on) => {
+  const ui = await mount($, on, 'Plan:\n1. Make a fresh folder.\n2. Remove the references.\n3. Add a license.')
+  const drawn = await texts(ui)
+  expect(await titled(ui, 'Plan')).toEqual(expect.objectContaining({ color: 'cyan' }))
+  expect(await borders(ui)).toEqual(['cyan'])
+  expect(drawn).toMatch(/1\. Make a fresh folder\./)
+  expect(drawn).toMatch(/3\. Add a license\./)
+  expect(await titled(ui, '1')).toBeFalsy()
+  await ui.unmount()
+})
+
+test('a plain numbered list with no intro is one untitled box', async ($, on) => {
+  const ui = await mount($, on, 'Some context first.\n\n1. One thing\n2. Another thing')
+  expect(await borders(ui)).toEqual(['gray', 'gray'])
+  expect(await titled(ui, '1')).toBeFalsy()
+  expect(await texts(ui)).toMatch(/2\. Another thing/)
   await ui.unmount()
 })

@@ -11,6 +11,7 @@ const FENCE_CLOSE = /^\s*```\s*$/
 const QUOTE = /^\s*>\s?/
 const HEADER = /^#{1,6}\s+(.+?)\s*#*$/
 const ITEM = /^(\d+)[.)]\s+(.+)$/
+const INTRO = /^\s*([^*`#>\s][^:]{0,58}):\s*$/
 const BOLD_LEAD = /^\*\*([^*]{1,60}?)[.:]?\*\*[.:]?\s*(.*)$/
 
 export function toneOf(title: string): Tone {
@@ -23,7 +24,7 @@ export function toneOf(title: string): Tone {
 }
 
 export function splitSections(text: string): Section[] {
-  type Draft = { title?: string; tone: Tone; parts: Part[]; lines: string[]; isQuote?: boolean; isItem?: boolean }
+  type Draft = { title?: string; tone: Tone; parts: Part[]; lines: string[]; isQuote?: boolean; isItem?: boolean; isList?: boolean }
   const drafts: Draft[] = [{ tone: 'border', parts: [], lines: [] }]
   const current = () => drafts[drafts.length - 1]!
   const flush = (d: Draft) => {
@@ -49,6 +50,17 @@ export function splitSections(text: string): Section[] {
       }
       continue
     }
+    if (current().isList) {
+      if (blank || ITEM.test(line) || (/^\s/.test(line) && !FENCE_OPEN.test(line))) {
+        current().lines.push(line)
+        prevBlank = blank
+        continue
+      }
+      if (!FENCE_OPEN.test(line)) {
+        flush(current())
+        drafts.push({ tone: 'border', parts: [], lines: [] })
+      }
+    }
     if (current().isItem) {
       if (blank || (/^\s/.test(line) && !FENCE_OPEN.test(line))) {
         current().lines.push(line.replace(/^\s{1,4}/, ''))
@@ -62,8 +74,19 @@ export function splitSections(text: string): Section[] {
     }
     const item = line.match(ITEM)
     if (item && (!current().title || current().isItem)) {
-      flush(current())
       const lead = item[2]!.match(BOLD_LEAD)
+      if (!lead && !current().isItem) {
+        const lines = current().lines
+        while (lines.length && !lines[lines.length - 1]!.trim()) lines.pop()
+        const intro = lines.length ? lines[lines.length - 1]!.match(INTRO) : null
+        if (intro) lines.pop()
+        flush(current())
+        const title = intro ? plain(intro[1]!) : undefined
+        drafts.push({ title, tone: title ? toneOf(title) : 'border', parts: [], lines: [line], isList: true })
+        prevBlank = false
+        continue
+      }
+      flush(current())
       const title = lead ? `${item[1]}. ${lead[1]!.trim()}` : item[1]!
       const rest = lead ? lead[2]! : item[2]!
       drafts.push({ title, tone: lead ? toneOf(lead[1]!) : 'border', parts: [], lines: rest ? [rest] : [], isItem: true })
