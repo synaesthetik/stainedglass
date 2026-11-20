@@ -69,7 +69,7 @@ The first match in that order wins. A numbered item takes its colour from its bo
 
 Purple carries the reply accents: numbers in prose are `magenta`, a bold lead-in such as `**Widths:**` is bold `magentaBright`, and question boxes have a `magenta` border.
 
-**Code blocks.** stainedglass draws fenced blocks itself and highlights them in the same palette. A block on its own sits in a grey frame titled with its language; inside a section box it is drawn unframed.
+**Code blocks.** stainedglass draws fenced blocks itself and highlights them in the same palette, always outside any box and at the full reply width, so a command copies without border characters. Code inside a section splits the box around it: the text before stays in the titled box, the code follows unboxed, and any text after continues in a box of the same colour.
 - `diff`: `+` and `-` lines in bright white on deep green (`#1f6b35`) and deep red (`#8b1e2a`) bands, filled to the box edge; `@@` cyan
 - `bash`/`sh`/`zsh`/`console`: the command bright white, flags bright cyan, strings bright green, `$VARS` bright red, pipes and comments grey
 - `json`/`yaml`: keys cyan, strings bright green, numbers bright yellow, literals magenta

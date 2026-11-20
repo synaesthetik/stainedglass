@@ -238,6 +238,9 @@ function band(lines: Line[], inner: number): Line[] {
   })
 }
 
+const codeLines = (part: { lang: string; code: string }, outer: number): Line[] =>
+  band(highlight(part.lang, part.code).flatMap(l => wrap(l, outer)), outer)
+
 function partLines(part: Part, inner: number): Line[] {
   if ('lang' in part) return band(highlight(part.lang, part.code).flatMap(l => wrap(l, inner)), inner)
   return markdown(part.text, inner)
@@ -373,7 +376,7 @@ const drawAssistantMessage = async ($: any, e: any, next: any) => {
   const outer = outerOf(e)
   const inner = outer - 4
   const found = splitOptions(e.props.text)
-  const blocks: Bordered[] = []
+  const blocks: (Bordered | { code: Line[] })[] = []
   let source: string = found ? found.before : e.props.text
   const paragraphs = source.trimEnd().split(/\n\s*\n/)
   const closing = !found && paragraphs.length > 1 && isQuestion(paragraphs[paragraphs.length - 1]!) ? paragraphs.pop()! : undefined
@@ -384,13 +387,32 @@ const drawAssistantMessage = async ($: any, e: any, next: any) => {
       continue
     }
     if (section.title) {
-      const body = section.parts.flatMap((part, i) => [...(i ? [[]] : []), ...partLines(part, inner)])
-      blocks.push(bordered(body, inner, TONE_STYLE[section.tone], titleLabel(inline(section.title), section.tone === 'border' ? 'header' : TONE_STYLE[section.tone])))
+      const tone = TONE_STYLE[section.tone]
+      const titleStyle: Style = section.tone === 'border' ? 'header' : tone
+      let pending: Line[] = []
+      let titled = false
+      const flushPending = () => {
+        if (!pending.length) return
+        blocks.push(bordered(pending, inner, tone, titled ? [] : titleLabel(inline(section.title), titleStyle)))
+        titled = true
+        pending = []
+      }
+      for (const part of section.parts) {
+        if ('lang' in part) {
+          flushPending()
+          const heading: Line[] = titled ? [] : [inline(section.title!).map(seg => ({ ...seg, style: seg.style ?? titleStyle }))]
+          titled = true
+          blocks.push({ code: [...heading, ...codeLines(part, outer)] })
+          continue
+        }
+        pending.push(...(pending.length ? [[]] : []), ...partLines(part, inner))
+      }
+      flushPending()
       continue
     }
     for (const part of section.parts) {
       if ('lang' in part) {
-        blocks.push(bordered(partLines(part, inner), inner, 'border', titleLabel(part.lang || undefined, 'comment')))
+        blocks.push({ code: codeLines(part, outer) })
         continue
       }
       for (const paragraph of part.text.split(/\n\s*\n/))
@@ -411,7 +433,15 @@ const drawAssistantMessage = async ($: any, e: any, next: any) => {
         <Text>{e.props.isFirstOfReply ? '●' : ' '}</Text>
       </Box>
       <Box flexDirection="column">
-        {blocks.map((b, i) => drawBordered($, e, b, outer, { key: `block-${i}`, marginTop: i ? 1 : 0 }))}
+        {blocks.map((b, i) =>
+          'code' in b ? (
+            <Box key={`block-${i}`} marginTop={i ? 1 : 0}>
+              {paint($, e, b.code)}
+            </Box>
+          ) : (
+            drawBordered($, e, b, outer, { key: `block-${i}`, marginTop: i ? 1 : 0 })
+          ),
+        )}
       </Box>
     </Box>
   )

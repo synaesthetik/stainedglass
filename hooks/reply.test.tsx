@@ -177,13 +177,13 @@ test('each bare paragraph draws in its own native single-border box at the full 
   await ui.unmount()
 })
 
-test('a fenced block indented under a plain item stays code inside that list box', async ($, on) => {
+test('a fenced block indented under a plain item breaks out of the list box, unboxed', async ($, on) => {
   const ui = await mount($, on, 'Then:\n\n1. Add the file:\n   ```json\n   { "name": "x" }\n   ```\n2. Restart')
   const drawn = await texts(ui)
   expect(await titled(ui, '1')).toBeFalsy()
   expect(drawn).not.toContain('```')
-  expect(drawn).toContain('{ "name": "x" }')
-  expect(await borders(ui)).toEqual(['gray'])
+  expect(drawn).toMatch(/^\{ "name": "x" \}$/m)
+  expect(await borders(ui)).toEqual(['gray', 'gray'])
   await ui.unmount()
 })
 
@@ -215,28 +215,30 @@ The old pane closes itself.`
 test('labelled chunks, headers and quotes draw as boxes titled in their top border, coloured by tone', async ($, on) => {
   const ui = await mount($, on, SECTIONED)
   const drawn = await texts(ui)
-  expect(await titled(ui, 'What changed')).toEqual(expect.objectContaining({ color: 'whiteBright', bold: true }))
+  expect((await ui.find({ type: 'Text', text: /^What changed$/ }))?.props).toEqual(expect.objectContaining({ color: 'whiteBright', bold: true }))
   expect(await titled(ui, 'Not verified live')).toEqual(expect.objectContaining({ color: 'yellow' }))
   expect(await titled(ui, 'Important')).toEqual(expect.objectContaining({ color: 'red' }))
   expect(await titled(ui, 'Cleanup')).toBeTruthy()
   const overlays = (await ui.findAll({ type: 'Box' })).filter((b: any) => b.props.position === 'absolute')
-  expect(overlays.map((b: any) => [b.props.top, b.props.left])).toEqual([[0, 1], [0, 1], [0, 1], [0, 1]])
-  expect(await borders(ui)).toEqual(['gray', 'gray', 'yellow', 'red', 'gray'])
+  expect(overlays.map((b: any) => [b.props.top, b.props.left])).toEqual([[0, 1], [0, 1], [0, 1]])
+  expect(await borders(ui)).toEqual(['gray', 'yellow', 'red', 'gray'])
   expect(drawn).toMatch(/^The verdict line needs a real test run\.$/m)
   expect(drawn).not.toMatch(/[┌│└]/)
   expect(drawn).not.toContain('---')
   expect(drawn).not.toContain('**')
   const added = (await ui.findAll({ type: 'Text', text: /^\+ a gauge on the strip +$/ })).find((t: any) => t.props?.backgroundColor)
   expect(added?.props).toEqual(expect.objectContaining({ backgroundColor: '#1f6b35', color: 'whiteBright' }))
-  expect([...added.text].length).toBe(92)
+  expect([...added.text].length).toBe(96)
   await ui.unmount()
 })
 
-test('a fenced block on its own draws in a frame titled with its language, highlighted', async ($, on) => {
+test('a fenced block draws unboxed and highlighted, so it copies cleanly', async ($, on) => {
   const ui = await mount($, on, 'Run this:\n\n```bash\ngit status --short\n```\n\nThen check.')
   const drawn = await texts(ui)
   expect(drawn).toContain('Run this:')
-  expect(await titled(ui, 'bash')).toEqual(expect.objectContaining({ color: 'blackBright' }))
+  expect(await borders(ui)).toEqual(['gray', 'gray'])
+  expect(drawn).toMatch(/^git status --short$/m)
+  expect(await titled(ui, 'bash')).toBeFalsy()
   expect(drawn).toContain('Then check.')
   expect(await seg(ui, /^--short$/)).toContainEqual(expect.objectContaining({ color: 'cyanBright' }))
   expect(await seg(ui, /^git$/)).toContainEqual(expect.objectContaining({ color: 'whiteBright', bold: true }))
@@ -344,5 +346,22 @@ test('a single bold option is the recommended one', async ($, on) => {
   const ui = await mount($, on, 'Next?\n\n1. **Push** it now\n2. Hold it for review')
   expect(await seg(ui, /^Push it now$/)).toContainEqual(expect.objectContaining({ color: 'green' }))
   expect((await seg(ui, /^Hold it for review$/)).some((p: any) => p.color === 'green')).toBe(false)
+  await ui.unmount()
+})
+
+test('code inside a section breaks the box: titled box, unboxed code, then the rest in the same colour', async ($, on) => {
+  const ui = await mount($, on, '**Steps**\nRun this:\n```bash\nls -la\n```\nThen check the output.')
+  const drawn = await texts(ui)
+  expect(await titled(ui, 'Steps')).toBeTruthy()
+  expect(await borders(ui)).toEqual(['cyan', 'cyan'])
+  expect(drawn).toMatch(/^ls -la$/m)
+  expect(drawn).toMatch(/^Then check the output\.$/m)
+  await ui.unmount()
+})
+
+test('a code line uses the full reply width before it wraps', async ($, on) => {
+  const command = 'echo ' + 'x'.repeat(89)
+  const ui = await mount($, on, 'Run:\n\n```bash\n' + command + '\n```')
+  expect((await ui.findAll({ type: 'Text' })).some((t: any) => t.text === command)).toBe(true)
   await ui.unmount()
 })
