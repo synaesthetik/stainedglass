@@ -7,7 +7,7 @@ import type { Block, Line, Seg, StepStatus, Style } from './draw'
 import { splitOptions } from './gates'
 import { changeCounts, counts, diffLines, headLines, langOf, shortPath } from './files'
 import { highlight } from './highlight'
-import { inline, markdown } from './markdown'
+import { inline, markdown, urls } from './markdown'
 import { splitSections } from './sections'
 import type { Part, Tone } from './sections'
 
@@ -250,6 +250,11 @@ const codeLines = (part: { lang: string; code: string }, outer: number, tone: St
   rule([], outer, tone),
 ]
 
+const linkBlocks = (text: string, outer: number, tone: Style = 'border') =>
+  urls(text).map(url => ({
+    code: [rule([{ text: 'link', style: 'comment' }], outer, tone), ...wrap([{ text: url, style: 'link' }], outer), rule([], outer, tone)],
+  }))
+
 function partLines(part: Part, inner: number): Line[] {
   if ('lang' in part) return band(highlight(part.lang, part.code).flatMap(l => wrap(l, inner)), inner)
   return markdown(part.text, inner)
@@ -399,12 +404,15 @@ const drawAssistantMessage = async ($: any, e: any, next: any) => {
       const tone = TONE_STYLE[section.tone]
       const titleStyle: Style = section.tone === 'border' ? 'header' : tone
       let pending: Line[] = []
+      let pendingText = ''
       let titled = false
       const flushPending = () => {
         if (!pending.length) return
         blocks.push(bordered(pending, inner, tone, titled ? [] : titleLabel(inline(section.title!), titleStyle)))
+        blocks.push(...linkBlocks(pendingText, outer, tone))
         titled = true
         pending = []
+        pendingText = ''
       }
       for (const part of section.parts) {
         if ('lang' in part) {
@@ -415,6 +423,7 @@ const drawAssistantMessage = async ($: any, e: any, next: any) => {
           continue
         }
         pending.push(...(pending.length ? [[]] : []), ...partLines(part, inner))
+        pendingText += '\n' + part.text
       }
       flushPending()
       continue
@@ -424,11 +433,14 @@ const drawAssistantMessage = async ($: any, e: any, next: any) => {
         blocks.push({ code: codeLines(part, outer) })
         continue
       }
-      for (const paragraph of part.text.split(/\n\s*\n/))
-        if (paragraph.trim()) blocks.push(bordered(markdown(paragraph, inner), inner, isQuestion(paragraph) ? 'decision' : 'border'))
+      for (const paragraph of part.text.split(/\n\s*\n/)) {
+        if (!paragraph.trim()) continue
+        const tone: Style = isQuestion(paragraph) ? 'decision' : 'border'
+        blocks.push(bordered(markdown(paragraph, inner), inner, tone), ...linkBlocks(paragraph, outer, tone))
+      }
     }
   }
-  if (closing) blocks.push(bordered(markdown(closing.trim(), inner), inner, 'decision'))
+  if (closing) blocks.push(bordered(markdown(closing.trim(), inner), inner, 'decision'), ...linkBlocks(closing, outer, 'decision'))
   if (found) {
     const fits = [...found.question].length <= outer - 6
     const heading = fits ? [] : [[{ text: found.question, style: 'heading' as Style }]]

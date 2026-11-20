@@ -1,7 +1,8 @@
 import { table, wrap } from './draw'
 import type { Line, Style } from './draw'
 
-const INLINE = /`([^`]+)`|\*\*(.+?)\*\*|__(.+?)__|\[([^\]]+)\]\(([^)\s]+)\)|\*([^*\s](?:[^*]*[^*\s])?)\*/g
+const URL = /https?:\/\/[^\s<>()`\]]*[^\s<>()`\].,;:!?'"]/g
+const INLINE = new RegExp(/`([^`]+)`|\*\*(.+?)\*\*|__(.+?)__|\[([^\]]+)\]\(([^)\s]+)\)|\*([^*\s](?:[^*]*[^*\s])?)\*/.source + `|(${URL.source})`, 'g')
 const PATH = /^(?:~|\.{1,2})?\/?(?:[\w.@-]+\/)+[\w.@-]*(?::\d+)?$|^[\w.-]+\.(?:rb|ts|tsx|js|jsx|json|ya?ml|md|py|go|tf|hcl|sh|toml|lock|css|html|erb|sql)(?::\d+)?$/
 const COUNT = /\b\d+(?:[.,:]\d+)*(?:%|ms|[smhkx]|KB|MB|GB|KiB|MiB|GiB)?\b/g
 const BULLET = /^(\s*)([-*+]|\d+[.)])\s+(.*)$/
@@ -28,12 +29,15 @@ export function inline(text: string, base?: Style): Line {
     if (m[1] !== undefined) line.push({ text: m[1], style: PATH.test(m[1]) ? 'path' : 'code' })
     else if (m[2] !== undefined || m[3] !== undefined) line.push(...inline((m[2] ?? m[3])!, 'strong'))
     else if (m[4] !== undefined) line.push({ text: m[4], style: 'link' })
-    else line.push(...inline(m[6]!, 'em'))
+    else if (m[6] !== undefined) line.push(...inline(m[6], 'em'))
+    else line.push({ text: m[7]!, style: 'link' })
     last = m.index! + m[0].length
   }
   plain(text.slice(last))
   return line
 }
+
+export const urls = (text: string): string[] => [...new Set(text.match(URL) ?? [])]
 
 const cells = (row: string) =>
   row

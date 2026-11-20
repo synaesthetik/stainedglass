@@ -86,6 +86,8 @@ Purple carries the reply accents: numbers in prose are `magenta`, a bold lead-in
 
 Short options share a row, and long ones wrap inside the border.
 
+**Links.** A URL stays in its sentence, drawn as a link, and is repeated after that box on its own row between rules titled `link`, in the box's colour, so it copies without border characters. A markdown link keeps its text in the sentence, and its URL gets the row. Trailing punctuation is left out, and a URL that appears twice gets one row.
+
 **Bash rows.** Each command is drawn in the `CommandPreview` idiom: `Command:` and its description, then the command, verbatim and uncoloured so it stays copy-pasteable, then one outcome line:
 - `● running` (cyan)
 - `✓ done` (green)

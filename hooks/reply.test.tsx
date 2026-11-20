@@ -367,7 +367,7 @@ test('a code line uses the full reply width before it wraps', async ($, on) => {
 })
 
 const around = (lines: string[], code: string) => {
-  const at = lines.indexOf(code)
+  const at = lines.lastIndexOf(code)
   const rows = (from: number, step: number) => {
     for (let i = from; i >= 0 && i < lines.length; i += step) if (/^──/.test(lines[i]!) && [...lines[i]!].length === 96) return lines[i]
   }
@@ -399,5 +399,41 @@ test('code that opens a section carries the section title in its rule, in the se
   expect(close).toBe('─'.repeat(96))
   expect(await seg(ui, /^── Steps ─+$/)).toContainEqual(expect.objectContaining({ color: 'cyan' }))
   expect(await seg(ui, /^─{96}$/)).toContainEqual(expect.objectContaining({ color: 'cyan' }))
+  await ui.unmount()
+})
+
+test('a bare URL stays in its sentence and is also drawn after the box on its own row between link rules', async ($, on) => {
+  const ui = await mount($, on, 'Here it is: https://github.com/o/r/pull/5')
+  const drawn = await texts(ui)
+  expect(drawn).toMatch(/^Here it is: https:\/\/github\.com\/o\/r\/pull\/5$/m)
+  expect(await borders(ui)).toEqual(['gray'])
+  const { open, close } = around(drawn.split('\n'), 'https://github.com/o/r/pull/5')
+  expect(open).toBe('── link ' + '─'.repeat(88))
+  expect(close).toBe('─'.repeat(96))
+  expect(await seg(ui, /^5$/)).toEqual([])
+  await ui.unmount()
+})
+
+test('a markdown link keeps its text in the sentence and its URL gets its own row', async ($, on) => {
+  const ui = await mount($, on, 'Opened [the PR](https://x.io/pull/7) for review.')
+  const drawn = await texts(ui)
+  expect(drawn).toMatch(/^Opened the PR for review\.$/m)
+  expect(around(drawn.split('\n'), 'https://x.io/pull/7').open).toBe('── link ' + '─'.repeat(88))
+  await ui.unmount()
+})
+
+test('trailing punctuation is not part of the copied URL, and a repeated URL gets one row', async ($, on) => {
+  const ui = await mount($, on, 'See https://a.io/c. Again: https://a.io/c, done.')
+  const lines = (await texts(ui)).split('\n')
+  expect(lines.filter((l: string) => l.startsWith('── link ')).length).toBe(1)
+  expect(around(lines, 'https://a.io/c').open).toBe('── link ' + '─'.repeat(88))
+  await ui.unmount()
+})
+
+test('a URL inside a titled section gets its row after that box, in the section colour', async ($, on) => {
+  const ui = await mount($, on, '**Done**\nMerged https://x.io/pull/9 into main.')
+  const drawn = await texts(ui)
+  expect(around(drawn.split('\n'), 'https://x.io/pull/9').open).toBe('── link ' + '─'.repeat(88))
+  expect(await seg(ui, /^─{96}$/)).toContainEqual(expect.objectContaining({ color: 'green' }))
   await ui.unmount()
 })
